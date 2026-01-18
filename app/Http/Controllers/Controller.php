@@ -10,3 +10,8 @@ class Controller extends BaseController
 {
     use AuthorizesRequests, ValidatesRequests;
 }
+
+// protected function isLocalEnv(): bool
+// {
+//     return app()->environment('local');
+// }
