@@ -94,7 +94,7 @@
               <td>{{ ($row->Counter_Category->code ?? '') . '-' . $row->queue_number }}</td>
               <td>{{ $row->booking_code }}</td>
               <td>{{ $row->Ticket_Category->name ?? '' }}</td>
-              <td>{{ $row->status == 3 ? $row->Counter->Group->name ?? '' : $row->groups }}</td>
+              <td>{{ $row->status == 3 ? $row->Counter->Group->name ?? '' : $row->group_names }}</td>
               <td>{{ $row->status == 3 ? $row->Counter->name : $row->counters }}</td>
               <td>{{ $row->status == 3 ? 'DALAM PANGGILAN' : $row->position }}</td>
               <td>{{ $row->email }}</td>
