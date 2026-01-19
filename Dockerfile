@@ -1,75 +1,38 @@
-# =========================
-# Base image
-# =========================
-FROM php:8.2-fpm
+FROM php:8.2-fpm-alpine
 
-# =========================
-# Install system dependencies
-# =========================
-RUN apt-get update && apt-get install -y \
+# Install system deps
+RUN apk add --no-cache \
     nginx \
+    curl \
     git \
     unzip \
-    curl \
-    nodejs \
-    npm \
     libzip-dev \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    && docker-php-ext-install \
-        pdo \
-        pdo_mysql \
-        zip \
-        mbstring \
-        exif \
-        pcntl \
-        bcmath \
-        gd
+    oniguruma-dev \
+    nodejs \
+    npm
 
-# =========================
-# Copy Nginx config
-# =========================
-COPY nginx/default.conf /etc/nginx/sites-available/default
+# PHP extensions
+RUN docker-php-ext-install pdo pdo_mysql mbstring zip
 
-# =========================
-# Set working directory
-# =========================
+# Set working dir
 WORKDIR /var/www/html
 
-# =========================
-# Copy project files
-# =========================
+# Copy project
 COPY . .
 
-# =========================
-# Install Composer
-# =========================
+# Install composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-# =========================
-# Install PHP dependencies
-# =========================
 RUN composer install --no-dev --optimize-autoloader
 
-# =========================
-# Build Vite assets
-# =========================
-RUN npm ci && npm run build
+# Build assets
+RUN npm install && npm run build
 
-# =========================
+# Nginx config
+COPY nginx/default.conf /etc/nginx/http.d/default.conf
+
 # Permissions
-# =========================
-RUN chown -R www-data:www-data \
-    storage \
-    bootstrap/cache
+RUN chown -R www-data:www-data storage bootstrap/cache
 
-# =========================
-# Expose port
-# =========================
 EXPOSE 80
 
-# =========================
-# Start services
-# =========================
-CMD service nginx start && php-fpm
+CMD php-fpm -D && nginx -g "daemon off;"
