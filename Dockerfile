@@ -1,21 +1,22 @@
 # =========================
-# Base Image
+# Base image
 # =========================
-FROM php:8.2-apache
+FROM php:8.2-fpm
 
 # =========================
 # Install system dependencies
 # =========================
 RUN apt-get update && apt-get install -y \
+    nginx \
     git \
     unzip \
+    curl \
+    nodejs \
+    npm \
     libzip-dev \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
-    curl \
-    nodejs \
-    npm \
     && docker-php-ext-install \
         pdo \
         pdo_mysql \
@@ -27,12 +28,9 @@ RUN apt-get update && apt-get install -y \
         gd
 
 # =========================
-# Enable Apache rewrite
+# Copy Nginx config
 # =========================
-RUN a2dismod mpm_event mpm_worker \
-    && a2enmod mpm_prefork
-
-RUN a2enmod rewrite
+COPY nginx/default.conf /etc/nginx/sites-available/default
 
 # =========================
 # Set working directory
@@ -55,25 +53,16 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
 
 # =========================
-# Install Node dependencies & build assets (Vite)
+# Build Vite assets
 # =========================
-RUN npm install && npm run build
+RUN npm ci && npm run build
 
 # =========================
-# Set permissions
+# Permissions
 # =========================
 RUN chown -R www-data:www-data \
-    /var/www/html/storage \
-    /var/www/html/bootstrap/cache
-
-# =========================
-# Apache Document Root to /public
-# =========================
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-
-RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' \
-    /etc/apache2/sites-available/*.conf \
-    /etc/apache2/apache2.conf
+    storage \
+    bootstrap/cache
 
 # =========================
 # Expose port
@@ -81,6 +70,6 @@ RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' \
 EXPOSE 80
 
 # =========================
-# Start Apache
+# Start services
 # =========================
-CMD ["apache2-foreground"]
+CMD service nginx start && php-fpm
