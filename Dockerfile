@@ -1,6 +1,6 @@
 FROM php:8.2-fpm-alpine
 
-# Install system deps
+# System dependencies
 RUN apk add --no-cache \
     nginx \
     curl \
@@ -8,30 +8,42 @@ RUN apk add --no-cache \
     unzip \
     libzip-dev \
     oniguruma-dev \
+    icu-dev \
     nodejs \
     npm
 
-# PHP extensions
-RUN docker-php-ext-install pdo pdo_mysql mbstring zip
+# PHP extensions (LENGKAP untuk Laravel 10)
+RUN docker-php-ext-install \
+    pdo \
+    pdo_mysql \
+    mbstring \
+    zip \
+    bcmath \
+    intl \
+    exif \
+    ctype \
+    fileinfo \
+    tokenizer
 
-# Set working dir
+# Working directory
 WORKDIR /var/www/html
 
-# Copy project
+# Copy app
 COPY . .
 
-# Install composer
+# Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Build assets
+# Build Vite
 RUN npm install && npm run build
 
 # Nginx config
 COPY nginx/default.conf /etc/nginx/http.d/default.conf
 
-# Permissions
-RUN chown -R www-data:www-data storage bootstrap/cache
+# Permissions (INI PENTING)
+RUN chown -R www-data:www-data storage bootstrap/cache \
+ && chmod -R 775 storage bootstrap/cache
 
 EXPOSE 80
 
