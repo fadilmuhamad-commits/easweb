@@ -42,8 +42,9 @@ RUN npm install && npm run build
 COPY nginx/default.conf /etc/nginx/http.d/default.conf
 
 # Permissions (INI PENTING)
-RUN chown -R www-data:www-data storage bootstrap/cache \
- && chmod -R 775 storage bootstrap/cache
+RUN mkdir -p storage/framework/{cache,sessions,views} \
+ && chmod -R 775 storage bootstrap/cache \
+ && chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 80
 
